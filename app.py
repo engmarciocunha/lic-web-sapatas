@@ -126,6 +126,14 @@ def _gerar_chave_base(seq: int, cliente: str, email: str) -> str:
     return f"{PREFIXO_CHAVE}-{seq:04d}-{_gerar_hash_cliente(cliente, email)}"
 
 
+def _atualizar_prefixo_sublicencas(lic: dict, chave_antiga: str, chave_nova: str) -> None:
+    for sub in lic.get("sublicencas", []):
+        for campo in ("chave", "chave_sub"):
+            valor = sub.get(campo)
+            if isinstance(valor, str) and valor.startswith(chave_antiga):
+                sub[campo] = chave_nova + valor[len(chave_antiga):]
+
+
 def _normalizar_data(valor: str) -> str:
     valor = str(valor or "").strip()
     if not valor:
@@ -524,11 +532,20 @@ def api_editar(chave_base):
             except ValueError as e:
                 return jsonify({"erro": str(e)}), 400
 
+            seq = _extrair_seq_chave(chave_base)
+            cliente = str(lic.get("cliente", "")).strip()
+            email = str(lic.get("email", "")).strip()
+            if seq is not None and cliente and email:
+                chave_nova = _gerar_chave_base(seq, cliente, email)
+                if chave_nova != chave_base:
+                    _atualizar_prefixo_sublicencas(lic, chave_base, chave_nova)
+                    lic["chave_base"] = chave_nova
+
             try:
                 salvar_json(dados)
             except Exception as e:
                 return jsonify({"erro": "Erro ao salvar no Dropbox.", "detalhe": _erro_dropbox(e)}), 500
-            return jsonify({"ok": True})
+            return jsonify({"ok": True, "chave_base": lic.get("chave_base")})
 
     return jsonify({"erro": "Licença não encontrada"}), 404
 

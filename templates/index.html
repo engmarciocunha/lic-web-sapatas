@@ -677,8 +677,8 @@ async function salvarLicenca() {
       toast('Licença criada! Chave: ' + r.chave_base);
     } else {
       const chave = dados.licencas[editandoIdx].chave_base;
-      await api('PUT', `/api/licencas/${encodeURIComponent(chave)}`, body);
-      toast('Licença atualizada.');
+      const r = await api('PUT', `/api/licencas/${encodeURIComponent(chave)}`, body);
+      toast(r.chave_base && r.chave_base !== chave ? 'Licença atualizada! Nova chave: ' + r.chave_base : 'Licença atualizada.');
     }
     fecharModal();
     await carregar();

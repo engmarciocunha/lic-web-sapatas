@@ -47,6 +47,55 @@ CAMINHO_DBX = "/DIMSAPATAS/LICENCE/licence.json"
 PREFIXO_CHAVE = "DIM-SAP-"
 
 
+def _erro_dropbox(exc: Exception) -> str:
+    resp = getattr(exc, "response", None)
+    if resp is not None:
+        texto = getattr(resp, "text", "") or ""
+        if texto:
+            return texto[:500]
+    return str(exc)
+
+
+def _json_nao_encontrado(exc: Exception) -> bool:
+    resp = getattr(exc, "response", None)
+    return (
+        resp is not None
+        and getattr(resp, "status_code", None) == 409
+        and "not_found" in (getattr(resp, "text", "") or "")
+    )
+
+
+def _dados_vazios() -> dict:
+    return {"licencas": []}
+
+
+def _normalizar_data(valor: str) -> str:
+    valor = str(valor or "").strip()
+    if not valor:
+        raise ValueError("Informe a data de expiração.")
+
+    try:
+        return date.fromisoformat(valor).isoformat()
+    except ValueError:
+        raise ValueError("Data de expiração inválida. Use AAAA-MM-DD.")
+
+
+def _normalizar_limite(valor) -> int:
+    try:
+        limite = int(valor)
+    except (TypeError, ValueError):
+        raise ValueError("Limite de dispositivos inválido.")
+    if limite < 1 or limite > 26:
+        raise ValueError("Limite de dispositivos deve ficar entre 1 e 26.")
+    return limite
+
+
+def _normalizar_ativo(valor) -> bool:
+    if isinstance(valor, str):
+        return valor.strip().lower() in {"1", "true", "sim", "s", "yes", "on"}
+    return bool(valor)
+
+
 # ── Dropbox helpers ───────────────────────────────────────────────────────────
 
 def _get_access_token() -> str:
@@ -62,6 +111,25 @@ def _get_access_token() -> str:
     )
     r.raise_for_status()
     return r.json()["access_token"]
+
+
+def _garantir_pasta_dropbox(token: str, caminho_arquivo: str) -> None:
+    partes = [p for p in caminho_arquivo.strip("/").split("/")[:-1] if p]
+    caminho = ""
+    for parte in partes:
+        caminho += "/" + parte
+        r = requests.post(
+            "https://api.dropboxapi.com/2/files/create_folder_v2",
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+            },
+            json={"path": caminho, "autorename": False},
+            timeout=10,
+        )
+        if r.status_code == 409:
+            continue
+        r.raise_for_status()
 
 
 def ler_json() -> dict:
@@ -80,6 +148,7 @@ def ler_json() -> dict:
 
 def salvar_json(dados: dict) -> bool:
     token = _get_access_token()
+    _garantir_pasta_dropbox(token, CAMINHO_DBX)
     payload = json.dumps(dados, indent=2, ensure_ascii=False).encode("utf-8")
     r = requests.post(
         "https://content.dropboxapi.com/2/files/upload",
@@ -305,52 +374,81 @@ def api_listar():
         dados = ler_json()
         return jsonify(dados)
     except Exception as e:
+        if _json_nao_encontrado(e):
+            return jsonify(_dados_vazios())
         return jsonify({"erro": str(e)}), 500
 
 
 @app.route("/api/licencas", methods=["POST"])
 @login_required
 def api_criar():
-    body = request.get_json() or {}
+    body = request.get_json(silent=True) or {}
+
+    try:
+        cliente = str(body.get("cliente", "")).strip()
+        if not cliente:
+            raise ValueError("Informe o nome do cliente.")
+        expiracao = _normalizar_data(body.get("expiracao", ""))
+        limite = _normalizar_limite(body.get("limite", 1))
+    except ValueError as e:
+        return jsonify({"erro": str(e)}), 400
+
     chave_base = _gerar_chave_base()
 
     nova = {
         "chave_base":         chave_base,
-        "cliente":            body.get("cliente", ""),
-        "email":              body.get("email", ""),
-        "telefone":           body.get("telefone", ""),
-        "expiracao":          body.get("expiracao", "2099-12-31"),
-        "limite_dispositivos": int(body.get("limite", 1)),
-        "ativo":              bool(body.get("ativo", True)),
+        "cliente":            cliente,
+        "email":              str(body.get("email", "")).strip(),
+        "telefone":           str(body.get("telefone", "")).strip(),
+        "expiracao":          expiracao,
+        "limite_dispositivos": limite,
+        "ativo":              _normalizar_ativo(body.get("ativo", True)),
         "sublicencas":        [],
         "data_criacao":       datetime.now(timezone.utc).isoformat(),
     }
 
     try:
         dados = ler_json()
-    except Exception:
-        dados = {"licencas": []}
+    except Exception as e:
+        if not _json_nao_encontrado(e):
+            return jsonify({"erro": "Erro ao ler arquivo de licenças.", "detalhe": _erro_dropbox(e)}), 500
+        dados = _dados_vazios()
 
-    dados.setdefault("licencas", []).append(nova)
-    salvar_json(dados)
+    try:
+        dados.setdefault("licencas", []).append(nova)
+        salvar_json(dados)
+    except Exception as e:
+        return jsonify({"erro": "Erro ao salvar no Dropbox.", "detalhe": _erro_dropbox(e)}), 500
+
     return jsonify({"ok": True, "chave_base": chave_base}), 201
 
 
 @app.route("/api/licencas/<chave_base>", methods=["PUT"])
 @login_required
 def api_editar(chave_base):
-    body  = request.get_json() or {}
-    dados = ler_json()
+    body = request.get_json(silent=True) or {}
+
+    try:
+        dados = ler_json()
+    except Exception as e:
+        return jsonify({"erro": "Erro ao ler arquivo de licenças.", "detalhe": _erro_dropbox(e)}), 500
 
     for lic in dados.get("licencas", []):
         if lic.get("chave_base") == chave_base:
-            if "cliente"  in body: lic["cliente"]             = body["cliente"]
-            if "email"    in body: lic["email"]               = body["email"]
-            if "telefone" in body: lic["telefone"]            = body["telefone"]
-            if "expiracao"in body: lic["expiracao"]           = body["expiracao"]
-            if "limite"   in body: lic["limite_dispositivos"] = int(body["limite"])
-            if "ativo"    in body: lic["ativo"]               = bool(body["ativo"])
-            salvar_json(dados)
+            try:
+                if "cliente"   in body: lic["cliente"]             = str(body["cliente"]).strip()
+                if "email"     in body: lic["email"]               = str(body["email"]).strip()
+                if "telefone"  in body: lic["telefone"]            = str(body["telefone"]).strip()
+                if "expiracao" in body: lic["expiracao"]           = _normalizar_data(body["expiracao"])
+                if "limite"    in body: lic["limite_dispositivos"] = _normalizar_limite(body["limite"])
+                if "ativo"     in body: lic["ativo"]               = _normalizar_ativo(body["ativo"])
+            except ValueError as e:
+                return jsonify({"erro": str(e)}), 400
+
+            try:
+                salvar_json(dados)
+            except Exception as e:
+                return jsonify({"erro": "Erro ao salvar no Dropbox.", "detalhe": _erro_dropbox(e)}), 500
             return jsonify({"ok": True})
 
     return jsonify({"erro": "Licença não encontrada"}), 404

@@ -194,7 +194,9 @@
     <div class="field"><label>Cliente *</label><input id="f-cliente"></div>
     <div class="field"><label>E-mail</label><input id="f-email" type="email"></div>
     <div class="field"><label>Telefone</label><input id="f-tel"></div>
-    <div class="field"><label>Expiração (AAAA-MM-DD) *</label><input id="f-exp" type="date"></div>
+    <div class="field"><label>Expiração (AAAA-MM-DD) *</label>
+      <input id="f-exp" type="text" inputmode="numeric" maxlength="10"
+             pattern="\d{4}-\d{2}-\d{2}" placeholder="2050-12-31" autocomplete="off"></div>
     <div class="field"><label>Limite de dispositivos</label>
       <input id="f-limite" type="number" min="1" max="26" value="1"></div>
     <div class="field"><label>Ativo?</label>
@@ -219,7 +221,12 @@ async function api(method, path, body) {
   const r = await fetch(path, opts);
   if (!r.ok) {
     const t = await r.text();
-    throw new Error(t || r.statusText);
+    let msg = t || r.statusText;
+    try {
+      const j = JSON.parse(t);
+      msg = j.erro || j.motivo || msg;
+    } catch {}
+    throw new Error(msg);
   }
   return r.json();
 }
@@ -244,6 +251,15 @@ function fmtTs(iso) {
   return d.toLocaleString('pt-BR', {timeZone:'America/Sao_Paulo',
     day:'2-digit', month:'2-digit', year:'numeric',
     hour:'2-digit', minute:'2-digit'});
+}
+
+function dataIsoValida(valor) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(valor)) return false;
+  const [ano, mes, dia] = valor.split('-').map(Number);
+  const d = new Date(Date.UTC(ano, mes - 1, dia));
+  return d.getUTCFullYear() === ano &&
+         d.getUTCMonth() === mes - 1 &&
+         d.getUTCDate() === dia;
 }
 
 // ── Render ────────────────────────────────────────────────────────────────────
@@ -358,6 +374,7 @@ async function salvar() {
 
   if (!cliente) { toast('Informe o nome do cliente.', true); return; }
   if (!expiracao) { toast('Informe a data de expiração.', true); return; }
+  if (!dataIsoValida(expiracao)) { toast('Use a data no formato AAAA-MM-DD. Ex.: 2050-12-31', true); return; }
   if (isNaN(limite) || limite < 1 || limite > 26) { toast('Limite entre 1 e 26.', true); return; }
 
   const body = {

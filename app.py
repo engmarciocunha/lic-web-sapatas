@@ -45,6 +45,7 @@ DBX_REFRESH_TOKEN = os.environ.get("DBX_REFRESH_TOKEN", "")
 CAMINHO_DBX = "/DIMSAPATAS/LICENCE/licence.json"
 
 PREFIXO_CHAVE = "DIM-SAP-"
+PLACEHOLDERS_ENV = {"", "PREENCHER", "CHANGE_ME", "TROCAR", "TROCAR123"}
 
 
 def _erro_dropbox(exc: Exception) -> str:
@@ -52,8 +53,34 @@ def _erro_dropbox(exc: Exception) -> str:
     if resp is not None:
         texto = getattr(resp, "text", "") or ""
         if texto:
+            try:
+                body = resp.json()
+                erro = body.get("error") or body.get("error_summary") or texto
+                if getattr(resp, "status_code", None) == 400 and "oauth2/token" in str(resp.url):
+                    return f"Credenciais Dropbox inválidas ou ausentes ({erro}). Configure DBX_APP_KEY, DBX_APP_SECRET e DBX_REFRESH_TOKEN no Render."
+            except Exception:
+                pass
             return texto[:500]
     return str(exc)
+
+
+def _env_configurada(valor: str) -> bool:
+    return str(valor or "").strip().upper() not in PLACEHOLDERS_ENV
+
+
+def _validar_config_dropbox() -> None:
+    faltando = [
+        nome for nome, valor in {
+            "DBX_APP_KEY": DBX_APP_KEY,
+            "DBX_APP_SECRET": DBX_APP_SECRET,
+            "DBX_REFRESH_TOKEN": DBX_REFRESH_TOKEN,
+        }.items()
+        if not _env_configurada(valor)
+    ]
+    if faltando:
+        raise RuntimeError(
+            "Configure as variáveis Dropbox no Render: " + ", ".join(faltando)
+        )
 
 
 def _json_nao_encontrado(exc: Exception) -> bool:
@@ -99,6 +126,7 @@ def _normalizar_ativo(valor) -> bool:
 # ── Dropbox helpers ───────────────────────────────────────────────────────────
 
 def _get_access_token() -> str:
+    _validar_config_dropbox()
     r = requests.post(
         "https://api.dropbox.com/oauth2/token",
         data={
@@ -376,7 +404,7 @@ def api_listar():
     except Exception as e:
         if _json_nao_encontrado(e):
             return jsonify(_dados_vazios())
-        return jsonify({"erro": str(e)}), 500
+        return jsonify({"erro": _erro_dropbox(e)}), 500
 
 
 @app.route("/api/licencas", methods=["POST"])

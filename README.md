@@ -68,6 +68,8 @@ git push -u origin main
 
 > Use as mesmas credenciais Dropbox do DIMBLOCOS/DIMHOLLOW
 > (o mesmo app Dropbox pode acessar qualquer pasta)
+> No Render, confira se esses três campos não ficaram como `PREENCHER`.
+> Se aparecer erro em `/oauth2/token`, o problema está nessas credenciais.
 
 5. Clique em **Create Web Service**
 

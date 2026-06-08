@@ -8,15 +8,15 @@ services:
       - key: FLASK_SECRET
         generateValue: true
       - key: PAINEL_SENHA
-        value: trocar123
+        sync: false
       - key: SAP_VERSAO_ATUAL
         value: 1.0.0
       - key: SAP_DOWNLOAD_URL
         value: ""
       - key: DBX_APP_KEY
-        value: PREENCHER
+        sync: false
       - key: DBX_APP_SECRET
-        value: PREENCHER
+        sync: false
       - key: DBX_REFRESH_TOKEN
-        value: PREENCHER
+        sync: false
     plan: free

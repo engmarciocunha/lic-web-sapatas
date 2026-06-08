@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ produto }} — Login</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #0d1410;
+    color: #e8f4e8;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card {
+    background: #111d14;
+    border: 1px solid #2a4a2a;
+    border-radius: 12px;
+    padding: 2.5rem 2rem;
+    width: 360px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .logo {
+    text-align: center;
+    margin-bottom: 1.8rem;
+  }
+  .logo h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #6ab96a;
+    letter-spacing: 1px;
+  }
+  .logo p { color: #4a7a4a; font-size: 0.8rem; margin-top: 4px; }
+  label { display: block; font-size: 0.85rem; color: #8aaa8a; margin-bottom: 6px; }
+  input[type=password] {
+    width: 100%;
+    padding: 10px 14px;
+    background: #1a2a1e;
+    border: 1px solid #2a4a2a;
+    border-radius: 6px;
+    color: #6ab96a;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color .2s;
+  }
+  input[type=password]:focus { border-color: #6ab96a; }
+  .erro {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: #3a1010;
+    border: 1px solid #6a1a1a;
+    border-radius: 6px;
+    color: #e08080;
+    font-size: 0.85rem;
+  }
+  button {
+    margin-top: 1.4rem;
+    width: 100%;
+    padding: 11px;
+    background: #6ab96a;
+    color: #0d1410;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  button:hover { background: #8ad08a; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <h1>DI&#9646;SAPATAS</h1>
+    <p>ULTIMATE — Painel de Licenças</p>
+  </div>
+  <form method="POST">
+    <label for="senha">Senha de acesso</label>
+    <input type="password" id="senha" name="senha" autofocus autocomplete="current-password">
+    {% if erro %}<div class="erro">{{ erro }}</div>{% endif %}
+    <button type="submit">ENTRAR</button>
+  </form>
+</div>
+</body>
+</html>

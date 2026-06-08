@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: lic-web-sapatas
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: FLASK_SECRET
+        generateValue: true
+      - key: PAINEL_SENHA
+        value: trocar123
+      - key: SAP_VERSAO_ATUAL
+        value: 1.0.0
+      - key: SAP_DOWNLOAD_URL
+        value: ""
+      - key: DBX_APP_KEY
+        value: PREENCHER
+      - key: DBX_APP_SECRET
+        value: PREENCHER
+      - key: DBX_REFRESH_TOKEN
+        value: PREENCHER
+    plan: free

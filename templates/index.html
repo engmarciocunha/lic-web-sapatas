@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ produto }} — Painel de Licenças</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:      #0d1410;
+    --bg2:     #111d14;
+    --bg3:     #162018;
+    --border:  #2a4a2a;
+    --green:   #6ab96a;
+    --green-lt:#a9d292;
+    --green-dk:#3a5a3a;
+    --red:     #d05050;
+    --text:    #d8ead8;
+    --muted:   #7a9a7a;
+  }
+  body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+
+  /* ── Header ── */
+  header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  header h1 { font-size: 1.1rem; color: var(--green); font-weight: 700; letter-spacing: 1px; }
+  header span { font-size: 0.75rem; color: var(--muted); margin-left: 10px; }
+  .logout { color: var(--muted); font-size: 0.8rem; text-decoration: none; }
+  .logout:hover { color: var(--red); }
+
+  /* ── Toolbar ── */
+  .toolbar {
+    padding: 12px 20px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .toolbar input[type=text] {
+    padding: 7px 12px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    width: 240px;
+    outline: none;
+  }
+  .toolbar input:focus { border-color: var(--green); }
+
+  /* ── Botões ── */
+  .btn {
+    padding: 7px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+  .btn:hover { opacity: .85; }
+  .btn-green  { background: var(--green);  color: #0d1410; }
+  .btn-red    { background: var(--red);    color: #fff; }
+  .btn-muted  { background: var(--bg3);    color: var(--muted); border: 1px solid var(--border); }
+  .btn-orange { background: #c07010;       color: #fff; }
+
+  /* ── Tabela ── */
+  .table-wrap { overflow-x: auto; padding: 0 20px 20px; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    background: var(--bg3);
+    color: var(--muted);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody tr { border-bottom: 1px solid #1a2a1a; transition: background .1s; }
+  tbody tr:hover { background: var(--bg3); }
+  tbody td { padding: 8px 10px; font-size: 0.85rem; vertical-align: top; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .badge-ok  { background: #1a4a1a; color: var(--green); }
+  .badge-nok { background: #3a1010; color: var(--red); }
+  .badge-exp { background: #3a2000; color: #d08040; }
+
+  .sub-block {
+    background: #0d170f;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin-top: 4px;
+    font-size: 0.78rem;
+  }
+  .sub-block .sub-header { color: var(--green-lt); font-weight: 600; margin-bottom: 4px; }
+  .sub-block .sub-detail { color: var(--muted); margin-top: 2px; }
+  .sub-block code { color: var(--green); font-family: monospace; font-size: 0.8rem; }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--bg2); border: 1px solid var(--border);
+    color: var(--text); padding: 12px 20px;
+    border-radius: 8px; font-size: 0.9rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,.4);
+    opacity: 0; transition: opacity .3s;
+    z-index: 999; max-width: 340px;
+  }
+  #toast.show { opacity: 1; }
+  #toast.err  { border-color: var(--red); color: var(--red); }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.65); z-index: 200;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1.8rem;
+    width: 480px; max-width: 95vw; max-height: 90vh; overflow-y: auto;
+  }
+  .modal h2 { font-size: 1rem; color: var(--green); margin-bottom: 1.2rem; }
+  .field { margin-bottom: 1rem; }
+  .field label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 5px; }
+  .field input, .field select {
+    width: 100%; padding: 8px 12px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text); font-size: 0.9rem; outline: none;
+  }
+  .field input:focus, .field select:focus { border-color: var(--green); }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.4rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>DI&#9646;SAPATAS ULTIMATE <span>Painel de Licenças</span></h1>
+  </div>
+  <a href="/logout" class="logout">Sair</a>
+</header>
+
+<div class="toolbar">
+  <button class="btn btn-green" onclick="abrirModal(null)">+ Nova Licença</button>
+  <input type="text" id="busca" placeholder="Buscar por cliente, chave, email…" oninput="filtrar()">
+  <button class="btn btn-muted" onclick="carregar()">↻ Atualizar</button>
+</div>
+
+<div class="table-wrap">
+  <table id="tabela">
+    <thead>
+      <tr>
+        <th>Chave Base</th>
+        <th>Cliente</th>
+        <th>Email / Tel.</th>
+        <th>Expiração</th>
+        <th>Dispositivos</th>
+        <th>Status</th>
+        <th>Versão</th>
+        <th>Último Acesso</th>
+        <th>MACs Registro</th>
+        <th>MACs Último Acesso</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="corpo"></tbody>
+  </table>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Modal Nova/Editar Licença -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h2 id="modal-titulo">Nova Licença</h2>
+    <div class="field"><label>Cliente *</label><input id="f-cliente"></div>
+    <div class="field"><label>E-mail</label><input id="f-email" type="email"></div>
+    <div class="field"><label>Telefone</label><input id="f-tel"></div>
+    <div class="field"><label>Expiração (AAAA-MM-DD) *</label><input id="f-exp" type="date"></div>
+    <div class="field"><label>Limite de dispositivos</label>
+      <input id="f-limite" type="number" min="1" max="26" value="1"></div>
+    <div class="field"><label>Ativo?</label>
+      <select id="f-ativo"><option value="true">Sim</option><option value="false">Não</option></select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-muted" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-green" onclick="salvar()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let dados = { licencas: [] };
+let editandoIdx = null;
+let ativoModal = true;
+
+// ── API ───────────────────────────────────────────────────────────────────────
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(path, opts);
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(t || r.statusText);
+  }
+  return r.json();
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+let _tid;
+function toast(msg, err=false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'show' + (err ? ' err' : '');
+  clearTimeout(_tid);
+  _tid = setTimeout(() => el.className = '', 3200);
+}
+
+// ── Datas / formatação ────────────────────────────────────────────────────────
+function fmtData(iso) {
+  if (!iso) return '—';
+  return iso.slice(0,10).split('-').reverse().join('/');
+}
+function fmtTs(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleString('pt-BR', {timeZone:'America/Sao_Paulo',
+    day:'2-digit', month:'2-digit', year:'numeric',
+    hour:'2-digit', minute:'2-digit'});
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function renderLicencas(lista) {
+  const corpo = document.getElementById('corpo');
+  corpo.innerHTML = '';
+  const hoje = new Date().toISOString().slice(0,10);
+
+  lista.forEach((lic, idx) => {
+    const subs     = lic.sublicencas || [];
+    const vencida  = lic.expiracao < hoje;
+    const status   = !lic.ativo ? 'Inativa' : vencida ? 'Vencida' : 'Ativa';
+    const badgeCls = !lic.ativo ? 'badge-nok' : vencida ? 'badge-exp' : 'badge-ok';
+
+    // Sublicenças
+    let subHtml = '';
+    subs.forEach(sub => {
+      const macsReg = (sub.macs_registro || []).join(', ') || '—';
+      const macsAcc = (sub.macs_acesso   || []).join(', ') || '—';
+      subHtml += `
+        <div class="sub-block">
+          <div class="sub-header"><code>${sub.chave_sub || '?'}</code> — ${sub.nome_maquina || '?'}</div>
+          <div class="sub-detail">ID: <code>${(sub.id_maquina||'?').slice(0,12)}…</code>
+            &nbsp;|&nbsp; Versão: ${sub.versao || '?'}</div>
+          <div class="sub-detail">Reg: ${fmtTs(sub.data_registro)} &nbsp;|&nbsp; Último: ${fmtTs(sub.ultimo_acesso)}</div>
+          <div class="sub-detail">MACs Reg: <code>${macsReg}</code></div>
+          <div class="sub-detail">MACs Ac:  <code>${macsAcc}</code></div>
+          <div style="margin-top:6px; display:flex; gap:6px;">
+            <button class="btn btn-orange" style="font-size:.72rem;padding:3px 10px"
+              onclick="limparSub('${lic.chave_base}','${sub.chave_sub}')">Limpar device</button>
+            <button class="btn btn-red" style="font-size:.72rem;padding:3px 10px"
+              onclick="deletarSub('${lic.chave_base}','${sub.chave_sub}')">Excluir</button>
+          </div>
+        </div>`;
+    });
+
+    const usadas = subs.length;
+    const limite = lic.limite_dispositivos || 1;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><code>${lic.chave_base}</code></td>
+      <td>${lic.cliente || '—'}</td>
+      <td><small>${lic.email || '—'}<br>${lic.telefone || ''}</small></td>
+      <td>${fmtData(lic.expiracao)}</td>
+      <td>${subHtml || '<span style="color:var(--muted)">Nenhum</span>'}
+        <div style="margin-top:4px;font-size:.75rem;color:var(--muted)">${usadas}/${limite} usados</div>
+      </td>
+      <td><span class="badge ${badgeCls}">${status}</span></td>
+      <td>${subs.length ? (subs[subs.length-1].versao||'—') : '—'}</td>
+      <td>${subs.length ? fmtTs(subs[subs.length-1].ultimo_acesso) : '—'}</td>
+      <td><small>${subs.length ? (subs[subs.length-1].macs_registro||[]).join('<br>') : '—'}</small></td>
+      <td><small>${subs.length ? (subs[subs.length-1].macs_acesso||[]).join('<br>') : '—'}</small></td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-muted"  style="padding:4px 10px;font-size:.78rem" onclick="abrirModal(${idx})">Editar</button>
+        <button class="btn btn-red"    style="padding:4px 10px;font-size:.78rem;margin-top:4px" onclick="deletar('${lic.chave_base}')">Excluir</button>
+      </td>`;
+    corpo.appendChild(tr);
+  });
+}
+
+// ── Carregar ──────────────────────────────────────────────────────────────────
+async function carregar() {
+  try {
+    dados = await api('GET', '/api/licencas');
+    filtrar();
+  } catch(e) {
+    toast('Erro ao carregar: ' + e.message, true);
+  }
+}
+
+function filtrar() {
+  const q = document.getElementById('busca').value.toLowerCase();
+  const lista = (dados.licencas || []).filter(l =>
+    !q ||
+    (l.chave_base||'').toLowerCase().includes(q) ||
+    (l.cliente||'').toLowerCase().includes(q) ||
+    (l.email||'').toLowerCase().includes(q)
+  );
+  renderLicencas(lista);
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+function abrirModal(idx) {
+  editandoIdx = idx;
+  const lic = idx !== null ? (dados.licencas || [])[idx] : null;
+  document.getElementById('modal-titulo').textContent = lic ? 'Editar Licença' : 'Nova Licença';
+
+  document.getElementById('f-cliente').value = lic ? (lic.cliente||'') : '';
+  document.getElementById('f-email').value   = lic ? (lic.email||'')   : '';
+  document.getElementById('f-tel').value     = lic ? (lic.telefone||'') : '';
+  document.getElementById('f-exp').value     = lic ? (lic.expiracao||'') : '';
+  document.getElementById('f-limite').value  = lic ? (lic.limite_dispositivos||1) : 1;
+  document.getElementById('f-ativo').value   = lic ? String(lic.ativo !== false) : 'true';
+  ativoModal = lic ? (lic.ativo !== false) : true;
+
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('f-cliente').focus();
+}
+
+function fecharModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  editandoIdx = null;
+}
+
+// ── Salvar ────────────────────────────────────────────────────────────────────
+async function salvar() {
+  const cliente  = document.getElementById('f-cliente').value.trim();
+  const expiracao= document.getElementById('f-exp').value.trim();
+  const limite   = parseInt(document.getElementById('f-limite').value) || 1;
+  ativoModal     = document.getElementById('f-ativo').value === 'true';
+
+  if (!cliente) { toast('Informe o nome do cliente.', true); return; }
+  if (!expiracao) { toast('Informe a data de expiração.', true); return; }
+  if (isNaN(limite) || limite < 1 || limite > 26) { toast('Limite entre 1 e 26.', true); return; }
+
+  const body = {
+    cliente,
+    email:     document.getElementById('f-email').value.trim(),
+    telefone:  document.getElementById('f-tel').value.trim(),
+    expiracao,
+    limite,
+    ativo: ativoModal,
+  };
+
+  try {
+    if (editandoIdx === null) {
+      const r = await api('POST', '/api/licencas', body);
+      toast('Licença criada! Chave: ' + r.chave_base);
+    } else {
+      const chave = (dados.licencas || [])[editandoIdx].chave_base;
+      await api('PUT', `/api/licencas/${encodeURIComponent(chave)}`, body);
+      toast('Licença atualizada.');
+    }
+    fecharModal();
+    await carregar();
+  } catch(e) {
+    toast(e.message, true);
+  }
+}
+
+// ── Excluir licença ───────────────────────────────────────────────────────────
+async function deletar(chave) {
+  if (!confirm(`Excluir licença ${chave}?`)) return;
+  try {
+    await api('DELETE', `/api/licencas/${encodeURIComponent(chave)}`);
+    toast('Licença excluída.');
+    await carregar();
+  } catch(e) { toast(e.message, true); }
+}
+
+// ── Excluir sublicença ────────────────────────────────────────────────────────
+async function deletarSub(chave_base, chave_sub) {
+  if (!confirm(`Excluir sublicença ${chave_sub}?`)) return;
+  try {
+    await api('DELETE', `/api/licencas/${encodeURIComponent(chave_base)}/sublicencas/${encodeURIComponent(chave_sub)}`);
+    toast('Sublicença excluída.');
+    await carregar();
+  } catch(e) { toast(e.message, true); }
+}
+
+// ── Limpar device ─────────────────────────────────────────────────────────────
+async function limparSub(chave_base, chave_sub) {
+  if (!confirm(`Limpar device de ${chave_sub}? O usuário precisará reativar.`)) return;
+  try {
+    await api('POST', `/api/licencas/${encodeURIComponent(chave_base)}/sublicencas/${encodeURIComponent(chave_sub)}/limpar`);
+    toast('Device limpo.');
+    await carregar();
+  } catch(e) { toast(e.message, true); }
+}
+
+// ── Fechar modal clicando fora ────────────────────────────────────────────────
+document.getElementById('modal-overlay').addEventListener('click', function(e) {
+  if (e.target === this) fecharModal();
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+carregar();
+</script>
+</body>
+</html>

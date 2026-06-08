@@ -19,7 +19,7 @@ Painel web (Márcio):
 
 import os
 import json
-import random
+import hashlib
 import string
 from datetime import date, datetime, timezone
 from functools import wraps
@@ -44,7 +44,7 @@ DBX_REFRESH_TOKEN = os.environ.get("DBX_REFRESH_TOKEN", "")
 # Caminho do JSON de licenças no Dropbox (produto separado do DIMBLOCOS)
 CAMINHO_DBX = "/DIMSAPATAS/LICENCE/licence.json"
 
-PREFIXO_CHAVE = "DIM-SAP-"
+PREFIXO_CHAVE = "DIM-SAP"
 PLACEHOLDERS_ENV = {"", "PREENCHER", "CHANGE_ME", "TROCAR", "TROCAR123"}
 
 
@@ -94,6 +94,36 @@ def _json_nao_encontrado(exc: Exception) -> bool:
 
 def _dados_vazios() -> dict:
     return {"licencas": []}
+
+
+def _gerar_hash_cliente(cliente: str, email: str) -> str:
+    raw = f"{cliente.strip().lower()}{email.strip().lower()}"
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest().upper()[:10]
+
+
+def _extrair_seq_chave(chave_base: str) -> int | None:
+    partes = str(chave_base or "").split("-")
+    if len(partes) < 3:
+        return None
+    try:
+        return int(partes[2])
+    except ValueError:
+        return None
+
+
+def _proximo_seq(dados: dict) -> int:
+    seqs = [
+        seq for seq in (
+            _extrair_seq_chave(lic.get("chave_base", ""))
+            for lic in dados.get("licencas", [])
+        )
+        if seq is not None
+    ]
+    return max(seqs, default=0) + 1
+
+
+def _gerar_chave_base(seq: int, cliente: str, email: str) -> str:
+    return f"{PREFIXO_CHAVE}-{seq:04d}-{_gerar_hash_cliente(cliente, email)}"
 
 
 def _normalizar_data(valor: str) -> str:
@@ -308,7 +338,7 @@ def validar():
             return jsonify({"valido": False, "motivo": "licenca_vencida"})
 
         sublicencas = lic.setdefault("sublicencas", [])
-        limite      = lic.get("limite_dispositivos", 1)
+        limite      = lic.get("limite_dispositivos", lic.get("limite", 1))
 
         # ── Primeira ativação ─────────────────────────────────────────────────
         if primeira_vez:
@@ -325,9 +355,12 @@ def validar():
 
             sublicencas.append({
                 "letra":         letra,
+                "chave":         chave_completa,
                 "chave_sub":     chave_completa,
                 "id_maquina":    id_maquina,
+                "dispositivo":   f"{nome_maquina}::{id_maquina}" if nome_maquina else id_maquina,
                 "macs_registro": macs_atuais,
+                "macs_ultimo_acesso": macs_atuais,
                 "macs_acesso":   macs_atuais,
                 "nome_maquina":  nome_maquina,
                 "versao":        versao_cli,
@@ -339,7 +372,7 @@ def validar():
 
         # ── Execuções subsequentes ────────────────────────────────────────────
         for sub in sublicencas:
-            if sub.get("chave_sub", "") != chave:
+            if (sub.get("chave_sub", "") or sub.get("chave", "")) != chave:
                 continue
 
             macs_reg = sub.get("macs_registro", [])
@@ -349,9 +382,11 @@ def validar():
             if sub.get("id_maquina", "") == id_maquina:
                 sub["ultimo_acesso"] = agora
                 sub["macs_acesso"]   = macs_atuais
+                sub["macs_ultimo_acesso"] = macs_atuais
                 sub["versao"]        = versao_cli
                 if nome_maquina:
                     sub["nome_maquina"] = nome_maquina
+                    sub["dispositivo"] = f"{nome_maquina}::{id_maquina}"
                 salvar_json(dados)
                 return jsonify({"valido": True, "chave_completa": chave})
 
@@ -360,9 +395,11 @@ def validar():
                 sub["id_maquina"]  = id_maquina
                 sub["ultimo_acesso"] = agora
                 sub["macs_acesso"]   = macs_atuais
+                sub["macs_ultimo_acesso"] = macs_atuais
                 sub["versao"]        = versao_cli
                 if nome_maquina:
                     sub["nome_maquina"] = nome_maquina
+                    sub["dispositivo"] = f"{nome_maquina}::{id_maquina}"
                 salvar_json(dados)
                 return jsonify({"valido": True, "chave_completa": chave})
 
@@ -377,24 +414,6 @@ def validar():
 
 # ── API REST do painel ────────────────────────────────────────────────────────
 
-def _gerar_chave_base() -> str:
-    """Gera DIM-SAP-NNNN onde NNNN é sequencial."""
-    try:
-        dados = ler_json()
-        existentes = [lic.get("chave_base", "") for lic in dados.get("licencas", [])]
-        nums = []
-        for c in existentes:
-            partes = c.split("-")
-            if len(partes) >= 3:
-                try: nums.append(int(partes[-1]))
-                except ValueError: pass
-        proximo = max(nums, default=0) + 1
-        return f"{PREFIXO_CHAVE}{proximo:04d}"
-    except Exception:
-        sufixo = "".join(random.choices(string.digits, k=4))
-        return f"{PREFIXO_CHAVE}{sufixo}"
-
-
 @app.route("/api/licencas", methods=["GET"])
 @login_required
 def api_listar():
@@ -407,6 +426,31 @@ def api_listar():
         return jsonify({"erro": _erro_dropbox(e)}), 500
 
 
+@app.route("/api/preview-chave", methods=["POST"])
+@login_required
+def api_preview_chave():
+    body = request.get_json(silent=True) or {}
+    cliente = str(body.get("cliente", "")).strip()
+    email = str(body.get("email", "")).strip()
+    seq = body.get("seq")
+
+    if not cliente or not email:
+        return jsonify({"chave": None})
+
+    try:
+        if seq is None:
+            try:
+                dados = ler_json()
+            except Exception as e:
+                if not _json_nao_encontrado(e):
+                    return jsonify({"erro": _erro_dropbox(e)}), 500
+                dados = _dados_vazios()
+            seq = _proximo_seq(dados)
+        return jsonify({"chave": _gerar_chave_base(int(seq), cliente, email), "seq": int(seq)})
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+
 @app.route("/api/licencas", methods=["POST"])
 @login_required
 def api_criar():
@@ -416,24 +460,13 @@ def api_criar():
         cliente = str(body.get("cliente", "")).strip()
         if not cliente:
             raise ValueError("Informe o nome do cliente.")
+        email = str(body.get("email", "")).strip()
+        if not email:
+            raise ValueError("Informe o e-mail do cliente.")
         expiracao = _normalizar_data(body.get("expiracao", ""))
         limite = _normalizar_limite(body.get("limite", 1))
     except ValueError as e:
         return jsonify({"erro": str(e)}), 400
-
-    chave_base = _gerar_chave_base()
-
-    nova = {
-        "chave_base":         chave_base,
-        "cliente":            cliente,
-        "email":              str(body.get("email", "")).strip(),
-        "telefone":           str(body.get("telefone", "")).strip(),
-        "expiracao":          expiracao,
-        "limite_dispositivos": limite,
-        "ativo":              _normalizar_ativo(body.get("ativo", True)),
-        "sublicencas":        [],
-        "data_criacao":       datetime.now(timezone.utc).isoformat(),
-    }
 
     try:
         dados = ler_json()
@@ -441,6 +474,21 @@ def api_criar():
         if not _json_nao_encontrado(e):
             return jsonify({"erro": "Erro ao ler arquivo de licenças.", "detalhe": _erro_dropbox(e)}), 500
         dados = _dados_vazios()
+
+    chave_base = _gerar_chave_base(_proximo_seq(dados), cliente, email)
+
+    nova = {
+        "chave_base":         chave_base,
+        "cliente":            cliente,
+        "email":              email,
+        "telefone":           str(body.get("telefone", "")).strip(),
+        "expiracao":          expiracao,
+        "limite":             limite,
+        "limite_dispositivos": limite,
+        "ativo":              _normalizar_ativo(body.get("ativo", True)),
+        "sublicencas":        [],
+        "data_criacao":       datetime.now(timezone.utc).isoformat(),
+    }
 
     try:
         dados.setdefault("licencas", []).append(nova)
@@ -468,7 +516,10 @@ def api_editar(chave_base):
                 if "email"     in body: lic["email"]               = str(body["email"]).strip()
                 if "telefone"  in body: lic["telefone"]            = str(body["telefone"]).strip()
                 if "expiracao" in body: lic["expiracao"]           = _normalizar_data(body["expiracao"])
-                if "limite"    in body: lic["limite_dispositivos"] = _normalizar_limite(body["limite"])
+                if "limite"    in body:
+                    limite = _normalizar_limite(body["limite"])
+                    lic["limite"] = limite
+                    lic["limite_dispositivos"] = limite
                 if "ativo"     in body: lic["ativo"]               = _normalizar_ativo(body["ativo"])
             except ValueError as e:
                 return jsonify({"erro": str(e)}), 400
@@ -494,14 +545,17 @@ def api_deletar(chave_base):
     return jsonify({"ok": True})
 
 
-@app.route("/api/licencas/<chave_base>/sublicencas/<chave_sub>", methods=["DELETE"])
+@app.route("/api/licencas/<chave_base>/sublicencas/<path:chave_sub>", methods=["DELETE"])
 @login_required
 def api_deletar_sub(chave_base, chave_sub):
     dados = ler_json()
     for lic in dados.get("licencas", []):
         if lic.get("chave_base") == chave_base:
             antes = len(lic.get("sublicencas", []))
-            lic["sublicencas"] = [s for s in lic.get("sublicencas", []) if s.get("chave_sub") != chave_sub]
+            lic["sublicencas"] = [
+                s for s in lic.get("sublicencas", [])
+                if (s.get("chave_sub") or s.get("chave")) != chave_sub
+            ]
             if len(lic["sublicencas"]) == antes:
                 return jsonify({"erro": "Sublicença não encontrada"}), 404
             salvar_json(dados)
@@ -509,17 +563,20 @@ def api_deletar_sub(chave_base, chave_sub):
     return jsonify({"erro": "Licença não encontrada"}), 404
 
 
-@app.route("/api/licencas/<chave_base>/sublicencas/<chave_sub>/limpar", methods=["POST"])
+@app.route("/api/licencas/<chave_base>/sublicencas/<path:chave_sub>/limpar", methods=["POST"])
 @login_required
 def api_limpar_sub(chave_base, chave_sub):
     dados = ler_json()
     for lic in dados.get("licencas", []):
         if lic.get("chave_base") == chave_base:
             for sub in lic.get("sublicencas", []):
-                if sub.get("chave_sub") == chave_sub:
+                if (sub.get("chave_sub") or sub.get("chave")) == chave_sub:
                     sub["id_maquina"]    = ""
+                    sub["dispositivo"]   = ""
+                    sub["nome_maquina"]  = ""
                     sub["macs_registro"] = []
                     sub["macs_acesso"]   = []
+                    sub["macs_ultimo_acesso"] = []
                     salvar_json(dados)
                     return jsonify({"ok": True})
     return jsonify({"erro": "Não encontrada"}), 404

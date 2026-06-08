@@ -2,255 +2,414 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{ produto }} — Painel de Licenças</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Licenças — DIMSAPATAS ULTIMATE</title>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg:      #0d1410;
-    --bg2:     #111d14;
-    --bg3:     #162018;
-    --border:  #2a4a2a;
-    --green:   #6ab96a;
-    --green-lt:#a9d292;
-    --green-dk:#3a5a3a;
-    --red:     #d05050;
-    --text:    #d8ead8;
-    --muted:   #7a9a7a;
-  }
-  body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+/* ── Reset & Base ─────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:         #F7F8FA;
+  --sidebar:    #1C2B1E;
+  --card:       #FFFFFF;
+  --border:     #E2E8F0;
+  --primary:    #2D7D46;
+  --primary-dk: #1A5C30;
+  --danger:     #DC2626;
+  --warning:    #D97706;
+  --info:       #2563EB;
+  --text:       #1A202C;
+  --muted:      #718096;
+  --hdr-bg:     #F1F5F9;
+  --row-odd:    #FFFFFF;
+  --row-grp:    #EEF7EE;
+  --green-lt:   #DCFCE7;
+  --red-lt:     #FEE2E2;
+  --yellow-lt:  #FFFBEB;
+}
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-  /* ── Header ── */
-  header {
-    background: var(--bg2);
-    border-bottom: 1px solid var(--border);
-    padding: 12px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky; top: 0; z-index: 100;
-  }
-  header h1 { font-size: 1.1rem; color: var(--green); font-weight: 700; letter-spacing: 1px; }
-  header span { font-size: 0.75rem; color: var(--muted); margin-left: 10px; }
-  .logout { color: var(--muted); font-size: 0.8rem; text-decoration: none; }
-  .logout:hover { color: var(--red); }
+/* ── Layout ───────────────────────────────────────────────────────────────── */
+.app { display: flex; min-height: 100vh; }
 
-  /* ── Toolbar ── */
-  .toolbar {
-    padding: 12px 20px;
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-  .toolbar input[type=text] {
-    padding: 7px 12px;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--text);
-    width: 240px;
-    outline: none;
-  }
-  .toolbar input:focus { border-color: var(--green); }
+/* ── Sidebar ──────────────────────────────────────────────────────────────── */
+.sidebar {
+  width: 220px; background: var(--sidebar); flex-shrink: 0;
+  display: flex; flex-direction: column; padding: 0 0 16px;
+}
+.sidebar-brand { padding: 28px 20px 0; }
+.sidebar-brand h1 { color: #6ab96a; font-size: 16px; letter-spacing: 1px; }
+.sidebar-brand p  { color: #4a7a4a; font-size: 11px; margin-top: 2px; }
+.sidebar-divider  { border: none; border-top: 1px solid #2a4a2a; margin: 18px 20px; }
+.sidebar-section  { color: #4a6a4a; font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 0 20px 8px; }
+.sidebar-btn {
+  display: flex; align-items: center; gap: 10px;
+  color: #c8e8c8; font-size: 13px; padding: 11px 20px;
+  cursor: pointer; border: none; background: #2a3d2c; width: 100%; text-align: left;
+  transition: background .15s; margin: 1px 0;
+}
+.sidebar-btn:hover { background: #3a5a3a; }
+.sidebar-btn.active { background: var(--primary); color: #fff; }
+.sidebar-status {
+  margin-top: auto; padding: 0 16px 0;
+  color: #4a7a4a; font-size: 11px; line-height: 1.5;
+}
 
-  /* ── Botões ── */
-  .btn {
-    padding: 7px 16px;
-    border: none;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: opacity .15s;
-  }
-  .btn:hover { opacity: .85; }
-  .btn-green  { background: var(--green);  color: #0d1410; }
-  .btn-red    { background: var(--red);    color: #fff; }
-  .btn-muted  { background: var(--bg3);    color: var(--muted); border: 1px solid var(--border); }
-  .btn-orange { background: #c07010;       color: #fff; }
+/* ── Main ─────────────────────────────────────────────────────────────────── */
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 
-  /* ── Tabela ── */
-  .table-wrap { overflow-x: auto; padding: 0 20px 20px; }
-  table { width: 100%; border-collapse: collapse; }
-  thead th {
-    background: var(--bg3);
-    color: var(--muted);
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    padding: 8px 10px;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-    white-space: nowrap;
-  }
-  tbody tr { border-bottom: 1px solid #1a2a1a; transition: background .1s; }
-  tbody tr:hover { background: var(--bg3); }
-  tbody td { padding: 8px 10px; font-size: 0.85rem; vertical-align: top; }
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 24px 28px 0; flex-wrap: wrap; gap: 12px;
+}
+.topbar h2 { font-size: 26px; font-weight: 800; }
+.topbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
-  .badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 600;
-  }
-  .badge-ok  { background: #1a4a1a; color: var(--green); }
-  .badge-nok { background: #3a1010; color: var(--red); }
-  .badge-exp { background: #3a2000; color: #d08040; }
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: none; border-radius: 8px; cursor: pointer;
+  font-family: inherit; font-size: 13px; font-weight: 600;
+  padding: 9px 16px; transition: filter .15s, opacity .15s;
+  white-space: nowrap;
+}
+.btn:hover { filter: brightness(.92); }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn-primary  { background: var(--primary);  color: #fff; }
+.btn-ghost    { background: var(--card); color: var(--muted); border: 1px solid var(--border); }
+.btn-danger   { background: var(--danger);   color: #fff; }
+.btn-warning  { background: var(--warning);  color: #fff; }
+.btn-info     { background: var(--info);     color: #fff; }
+.btn-dark     { background: #4B5563; color: #fff; }
+.btn-sm       { font-size: 12px; padding: 6px 12px; }
 
-  .sub-block {
-    background: #0d170f;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 6px 10px;
-    margin-top: 4px;
-    font-size: 0.78rem;
-  }
-  .sub-block .sub-header { color: var(--green-lt); font-weight: 600; margin-bottom: 4px; }
-  .sub-block .sub-detail { color: var(--muted); margin-top: 2px; }
-  .sub-block code { color: var(--green); font-family: monospace; font-size: 0.8rem; }
+/* ── Cards ────────────────────────────────────────────────────────────────── */
+.cards { display: flex; gap: 12px; padding: 20px 28px 0; flex-wrap: wrap; }
+.stat-card {
+  background: var(--card); border-radius: 10px;
+  border: 2px solid var(--c, var(--border));
+  padding: 14px 20px; min-width: 120px; flex: 1;
+}
+.stat-card .label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+.stat-card .value { font-size: 28px; font-weight: 800; color: var(--c, var(--text)); line-height: 1.1; margin-top: 4px; }
 
-  /* ── Toast ── */
-  #toast {
-    position: fixed; bottom: 24px; right: 24px;
-    background: var(--bg2); border: 1px solid var(--border);
-    color: var(--text); padding: 12px 20px;
-    border-radius: 8px; font-size: 0.9rem;
-    box-shadow: 0 4px 16px rgba(0,0,0,.4);
-    opacity: 0; transition: opacity .3s;
-    z-index: 999; max-width: 340px;
-  }
-  #toast.show { opacity: 1; }
-  #toast.err  { border-color: var(--red); color: var(--red); }
+/* ── Table container ──────────────────────────────────────────────────────── */
+.table-wrap {
+  margin: 16px 28px 28px; background: var(--card);
+  border: 1px solid var(--border); border-radius: 10px;
+  overflow: hidden; flex: 1; display: flex; flex-direction: column;
+}
+.table-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; background: var(--hdr-bg); flex-wrap: wrap; gap: 8px;
+}
+.table-header span { font-size: 13px; font-weight: 700; }
+.table-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.table-divider { height: 1px; background: var(--border); }
+.table-scroll  { overflow-x: auto; flex: 1; }
 
-  /* ── Modal ── */
-  .modal-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,.65); z-index: 200;
-    align-items: center; justify-content: center;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: var(--bg2); border: 1px solid var(--border);
-    border-radius: 10px; padding: 1.8rem;
-    width: 480px; max-width: 95vw; max-height: 90vh; overflow-y: auto;
-  }
-  .modal h2 { font-size: 1rem; color: var(--green); margin-bottom: 1.2rem; }
-  .field { margin-bottom: 1rem; }
-  .field label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 5px; }
-  .field input, .field select {
-    width: 100%; padding: 8px 12px;
-    background: var(--bg3); border: 1px solid var(--border);
-    border-radius: 6px; color: var(--text); font-size: 0.9rem; outline: none;
-  }
-  .field input:focus, .field select:focus { border-color: var(--green); }
-  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.4rem; }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+thead th {
+  background: var(--hdr-bg); color: var(--muted);
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+  padding: 10px 12px; text-align: center; white-space: nowrap;
+  position: sticky; top: 0; z-index: 1;
+}
+tbody tr { cursor: pointer; transition: background .1s; }
+tbody tr:hover { filter: brightness(.97); }
+tbody tr.selected { outline: 2px solid var(--primary); outline-offset: -2px; }
+tbody td { padding: 9px 12px; text-align: center; white-space: nowrap; vertical-align: middle; }
+tbody tr.row-ativa   { background: var(--row-odd); }
+tbody tr.row-grupo   { background: var(--row-grp); }
+tbody tr.row-inativa { background: var(--red-lt);    color: #B91C1C; }
+tbody tr.row-vencida { background: var(--yellow-lt); color: #92400E; }
+
+.badge {
+  display: inline-block; border-radius: 99px;
+  font-size: 11px; font-weight: 700; padding: 3px 10px;
+}
+.badge-ativa   { background: #DCFCE7; color: #15803D; }
+.badge-inativa { background: var(--red-lt); color: #B91C1C; }
+.badge-vencida { background: var(--yellow-lt); color: #B45309; }
+
+/* ── Footer ───────────────────────────────────────────────────────────────── */
+.table-footer {
+  padding: 8px 16px; background: var(--border);
+  font-size: 12px; color: var(--muted);
+}
+
+/* ── Modal ────────────────────────────────────────────────────────────────── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.45); z-index: 100;
+  align-items: center; justify-content: center; padding: 16px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--card); border-radius: 14px;
+  width: 100%; max-width: 480px; max-height: 90vh;
+  overflow-y: auto; box-shadow: 0 24px 80px rgba(0,0,0,.3);
+}
+.modal-hdr {
+  background: var(--sidebar); color: #fff; padding: 18px 24px;
+  font-size: 16px; font-weight: 700; border-radius: 14px 14px 0 0;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.modal-hdr button { background: none; border: none; color: #aaa; font-size: 20px; cursor: pointer; }
+.modal-body { padding: 20px 24px 24px; }
+
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 5px; }
+.field input, .field select {
+  width: 100%; padding: 10px 12px; border: 1.5px solid var(--border);
+  border-radius: 8px; font-size: 14px; font-family: inherit; outline: none;
+  background: var(--card); transition: border-color .15s;
+}
+.field input:focus, .field select:focus { border-color: var(--primary); }
+
+.chave-preview {
+  background: #EEF7EE; border: 1.5px solid var(--border);
+  border-radius: 8px; padding: 10px 14px;
+  font-size: 14px; font-weight: 700; color: var(--primary);
+  text-align: center; letter-spacing: .5px; margin-bottom: 16px;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.chave-preview span { flex: 1; }
+
+.toggle-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.toggle { width: 40px; height: 22px; border-radius: 99px; background: #CBD5E0; cursor: pointer; position: relative; transition: background .2s; border: none; }
+.toggle.on { background: var(--primary); }
+.toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left .2s; }
+.toggle.on::after { left: 21px; }
+
+.modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 0 24px 20px; }
+
+/* ── Toast ────────────────────────────────────────────────────────────────── */
+#toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: #1A202C; color: #fff; padding: 12px 20px; border-radius: 8px;
+  font-size: 13px; font-weight: 600; z-index: 200; opacity: 0;
+  transition: transform .3s, opacity .3s; white-space: nowrap;
+}
+#toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+#toast.error { background: var(--danger); }
+
+/* ── Spinner ──────────────────────────────────────────────────────────────── */
+.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Loading overlay ──────────────────────────────────────────────────────── */
+#loading {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.15); z-index: 50;
+  align-items: center; justify-content: center;
+}
+#loading.show { display: flex; }
+.loading-box { background: var(--card); border-radius: 12px; padding: 24px 32px; display: flex; align-items: center; gap: 14px; font-weight: 600; }
+.loading-box .spin2 { width: 22px; height: 22px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .6s linear infinite; }
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .topbar  { padding: 16px 16px 0; }
+  .topbar h2 { font-size: 20px; }
+  .cards   { padding: 12px 16px 0; }
+  .stat-card .value { font-size: 22px; }
+  .table-wrap { margin: 12px 16px 16px; }
+  .table-actions .btn { font-size: 11px; padding: 6px 10px; }
+  .table-header { flex-direction: column; align-items: flex-start; }
+}
 </style>
 </head>
 <body>
+<div class="app">
 
-<header>
-  <div>
-    <h1>DI&#9646;SAPATAS ULTIMATE <span>Painel de Licenças</span></h1>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <h1>DIMSAPATAS</h1>
+      <p>ULTIMATE</p>
+    </div>
+    <hr class="sidebar-divider">
+    <div class="sidebar-section">GERENCIAMENTO</div>
+    <button class="sidebar-btn active" onclick="carregar()">🔑&nbsp; Licenças</button>
+    <hr class="sidebar-divider" style="margin-top:auto;">
+    <div class="sidebar-status" id="sidebarStatus">—</div>
+    <div style="padding:12px 16px 0;">
+      <a href="/logout" style="color:#4a6a4a;font-size:12px;text-decoration:none;">↩ Sair</a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Top bar -->
+    <div class="topbar">
+      <h2>Licenças</h2>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost" onclick="carregar()">↺ Atualizar</button>
+        <button class="btn btn-primary" onclick="abrirModalNova()">+ Nova Licença</button>
+        <a href="/logout" class="btn btn-ghost" style="text-decoration:none">↩ Sair</a>
+      </div>
+    </div>
+
+    <!-- Cards -->
+    <div class="cards">
+      <div class="stat-card" style="--c:#2D7D46"><div class="label">Total Ativações</div><div class="value" id="cTotal">—</div></div>
+      <div class="stat-card" style="--c:#0891B2"><div class="label">Clientes</div><div class="value" id="cClientes">—</div></div>
+      <div class="stat-card" style="--c:#16A34A"><div class="label">Ativas</div><div class="value" id="cAtivas">—</div></div>
+      <div class="stat-card" style="--c:#D97706"><div class="label">Vencidas</div><div class="value" id="cVencidas">—</div></div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <div class="table-header">
+        <span>📋 Todas as licenças</span>
+        <div class="table-actions" id="tableActions">
+          <button class="btn btn-info btn-sm"    id="btnEditar"  onclick="editarSelecionada()" disabled>✎ Editar</button>
+          <button class="btn btn-warning btn-sm" id="btnLimpar"  onclick="limparDeviceSelecionado()" disabled>⟳ Limpar Device</button>
+          <button class="btn btn-danger btn-sm"  id="btnRemover" onclick="removerSelecionada()" disabled>✕ Remover</button>
+          <button class="btn btn-dark btn-sm"    id="btnCopiar"  onclick="copiarChaveSelecionada()" disabled>⧉ Copiar Chave</button>
+        </div>
+      </div>
+      <div class="table-divider"></div>
+      <div class="table-scroll">
+        <table id="tabela">
+          <thead>
+            <tr>
+              <th>Chave Base</th>
+              <th>Sublicença</th>
+              <th>Cliente</th>
+              <th>E-mail</th>
+              <th>Telefone</th>
+              <th>Expiração</th>
+              <th>Status</th>
+              <th>Ativações</th>
+              <th>Nome do PC</th>
+              <th>ID do Computador</th>
+              <th>Versão</th>
+              <th>Último Acesso</th>
+              <th>MACs Registro</th>
+              <th>MACs Último Acesso</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="table-footer" id="rodape">Carregando...</div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Modal Nova/Editar Licença -->
+<div class="modal-overlay" id="modalOverlay" onclick="fecharModalSeFora(event)">
+  <div class="modal" id="modal">
+    <div class="modal-hdr">
+      <span id="modalTitulo">Nova Licença</span>
+      <button onclick="fecharModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Preview chave -->
+      <div class="field">
+        <label>Chave Base (gerada automaticamente)</label>
+        <div class="chave-preview">
+          <span id="chavePreview">— preencha nome e e-mail —</span>
+          <button class="btn btn-dark btn-sm" onclick="copiarChaveModal()">⧉ Copiar</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Nome do Cliente *</label>
+        <input type="text" id="fCliente" placeholder="Ex: João Silva" oninput="atualizarPreview()">
+      </div>
+      <div class="field">
+        <label>E-mail *</label>
+        <input type="email" id="fEmail" placeholder="Ex: joao@email.com" oninput="atualizarPreview()">
+      </div>
+      <div class="field">
+        <label>Telefone</label>
+        <input type="text" id="fTelefone" placeholder="Ex: (81) 99999-9999">
+      </div>
+      <div class="field">
+        <label>Data de Expiração * (AAAA-MM-DD)</label>
+        <input type="text" id="fExpiracao" inputmode="numeric" maxlength="10"
+               pattern="\d{4}-\d{2}-\d{2}" placeholder="2050-12-31" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Limite de Ativações (1–26)</label>
+        <input type="number" id="fLimite" min="1" max="26" value="1">
+      </div>
+      <div class="toggle-row">
+        <button class="toggle on" id="toggleAtivo" onclick="toggleAtivo()"></button>
+        <span id="toggleLabel" style="font-size:14px;font-weight:600;">Licença Ativa</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-primary" id="btnSalvar" onclick="salvarLicenca()">Salvar</button>
+    </div>
   </div>
-  <a href="/logout" class="logout">Sair</a>
-</header>
-
-<div class="toolbar">
-  <button class="btn btn-green" onclick="abrirModal(null)">+ Nova Licença</button>
-  <input type="text" id="busca" placeholder="Buscar por cliente, chave, email…" oninput="filtrar()">
-  <button class="btn btn-muted" onclick="carregar()">↻ Atualizar</button>
 </div>
 
-<div class="table-wrap">
-  <table id="tabela">
-    <thead>
-      <tr>
-        <th>Chave Base</th>
-        <th>Cliente</th>
-        <th>Email / Tel.</th>
-        <th>Expiração</th>
-        <th>Dispositivos</th>
-        <th>Status</th>
-        <th>Versão</th>
-        <th>Último Acesso</th>
-        <th>MACs Registro</th>
-        <th>MACs Último Acesso</th>
-        <th>Ações</th>
-      </tr>
-    </thead>
-    <tbody id="corpo"></tbody>
-  </table>
-</div>
+<!-- Loading -->
+<div id="loading"><div class="loading-box"><div class="spin2"></div>Aguarde...</div></div>
 
 <!-- Toast -->
 <div id="toast"></div>
 
-<!-- Modal Nova/Editar Licença -->
-<div class="modal-overlay" id="modal-overlay">
-  <div class="modal">
-    <h2 id="modal-titulo">Nova Licença</h2>
-    <div class="field"><label>Cliente *</label><input id="f-cliente"></div>
-    <div class="field"><label>E-mail</label><input id="f-email" type="email"></div>
-    <div class="field"><label>Telefone</label><input id="f-tel"></div>
-    <div class="field"><label>Expiração (AAAA-MM-DD) *</label>
-      <input id="f-exp" type="text" inputmode="numeric" maxlength="10"
-             pattern="\d{4}-\d{2}-\d{2}" placeholder="2050-12-31" autocomplete="off"></div>
-    <div class="field"><label>Limite de dispositivos</label>
-      <input id="f-limite" type="number" min="1" max="26" value="1"></div>
-    <div class="field"><label>Ativo?</label>
-      <select id="f-ativo"><option value="true">Sim</option><option value="false">Não</option></select>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-muted" onclick="fecharModal()">Cancelar</button>
-      <button class="btn btn-green" onclick="salvar()">Salvar</button>
-    </div>
-  </div>
-</div>
-
 <script>
-let dados = { licencas: [] };
-let editandoIdx = null;
-let ativoModal = true;
+// ── Estado ──────────────────────────────────────────────────────────────────
+let dados          = null;   // { licencas: [...] }
+let linhaSelecionada = null; // { chave_base, chave_sub (ou null), tr }
+let editandoIdx    = null;   // null = nova, number = editar
+let seqPreview     = null;
+let ativoModal     = true;
 
-// ── API ───────────────────────────────────────────────────────────────────────
-async function api(method, path, body) {
-  const opts = { method, headers: { 'Content-Type': 'application/json' } };
-  if (body) opts.body = JSON.stringify(body);
-  const r = await fetch(path, opts);
-  if (!r.ok) {
-    const t = await r.text();
-    let msg = t || r.statusText;
-    try {
-      const j = JSON.parse(t);
-      msg = j.erro || j.motivo || msg;
-    } catch {}
-    throw new Error(msg);
+// ── Utilitários ──────────────────────────────────────────────────────────────
+function toast(msg, erro = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className   = 'show' + (erro ? ' error' : '');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.className = ''; }, 3000);
+}
+
+function setLoading(on) {
+  document.getElementById('loading').className = on ? 'show' : '';
+}
+
+async function api(method, path, body = null) {
+  setLoading(true);
+  try {
+    const opts = { method, headers: {} };
+    if (body) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+    const r = await fetch(path, opts);
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || j.erro || j.motivo || `HTTP ${r.status}`);
+    return j;
+  } finally {
+    setLoading(false);
   }
-  return r.json();
 }
 
-// ── Toast ─────────────────────────────────────────────────────────────────────
-let _tid;
-function toast(msg, err=false) {
-  const el = document.getElementById('toast');
-  el.textContent = msg; el.className = 'show' + (err ? ' err' : '');
-  clearTimeout(_tid);
-  _tid = setTimeout(() => el.className = '', 3200);
+function formatar_macs(v) {
+  if (!v || (Array.isArray(v) && v.length === 0)) return '—';
+  return Array.isArray(v) ? v.join(', ') : String(v);
 }
 
-// ── Datas / formatação ────────────────────────────────────────────────────────
-function fmtData(iso) {
-  if (!iso) return '—';
-  return iso.slice(0,10).split('-').reverse().join('/');
+function extrair_nome(disp) {
+  return disp && disp.includes('::') ? disp.split('::')[0] : '';
 }
-function fmtTs(iso) {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  return d.toLocaleString('pt-BR', {timeZone:'America/Sao_Paulo',
-    day:'2-digit', month:'2-digit', year:'numeric',
-    hour:'2-digit', minute:'2-digit'});
+function extrair_id(disp) {
+  return disp && disp.includes('::') ? disp.split('::')[1] : (disp || '—');
+}
+
+function hoje() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function vencida(exp) {
+  return exp && hoje() > exp;
 }
 
 function dataIsoValida(valor) {
@@ -262,136 +421,262 @@ function dataIsoValida(valor) {
          d.getUTCDate() === dia;
 }
 
-// ── Render ────────────────────────────────────────────────────────────────────
-function renderLicencas(lista) {
-  const corpo = document.getElementById('corpo');
-  corpo.innerHTML = '';
-  const hoje = new Date().toISOString().slice(0,10);
-
-  lista.forEach((lic, idx) => {
-    const subs     = lic.sublicencas || [];
-    const vencida  = lic.expiracao < hoje;
-    const status   = !lic.ativo ? 'Inativa' : vencida ? 'Vencida' : 'Ativa';
-    const badgeCls = !lic.ativo ? 'badge-nok' : vencida ? 'badge-exp' : 'badge-ok';
-
-    // Sublicenças
-    let subHtml = '';
-    subs.forEach(sub => {
-      const macsReg = (sub.macs_registro || []).join(', ') || '—';
-      const macsAcc = (sub.macs_acesso   || []).join(', ') || '—';
-      subHtml += `
-        <div class="sub-block">
-          <div class="sub-header"><code>${sub.chave_sub || '?'}</code> — ${sub.nome_maquina || '?'}</div>
-          <div class="sub-detail">ID: <code>${(sub.id_maquina||'?').slice(0,12)}…</code>
-            &nbsp;|&nbsp; Versão: ${sub.versao || '?'}</div>
-          <div class="sub-detail">Reg: ${fmtTs(sub.data_registro)} &nbsp;|&nbsp; Último: ${fmtTs(sub.ultimo_acesso)}</div>
-          <div class="sub-detail">MACs Reg: <code>${macsReg}</code></div>
-          <div class="sub-detail">MACs Ac:  <code>${macsAcc}</code></div>
-          <div style="margin-top:6px; display:flex; gap:6px;">
-            <button class="btn btn-orange" style="font-size:.72rem;padding:3px 10px"
-              onclick="limparSub('${lic.chave_base}','${sub.chave_sub}')">Limpar device</button>
-            <button class="btn btn-red" style="font-size:.72rem;padding:3px 10px"
-              onclick="deletarSub('${lic.chave_base}','${sub.chave_sub}')">Excluir</button>
-          </div>
-        </div>`;
-    });
-
-    const usadas = subs.length;
-    const limite = lic.limite_dispositivos || 1;
-
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><code>${lic.chave_base}</code></td>
-      <td>${lic.cliente || '—'}</td>
-      <td><small>${lic.email || '—'}<br>${lic.telefone || ''}</small></td>
-      <td>${fmtData(lic.expiracao)}</td>
-      <td>${subHtml || '<span style="color:var(--muted)">Nenhum</span>'}
-        <div style="margin-top:4px;font-size:.75rem;color:var(--muted)">${usadas}/${limite} usados</div>
-      </td>
-      <td><span class="badge ${badgeCls}">${status}</span></td>
-      <td>${subs.length ? (subs[subs.length-1].versao||'—') : '—'}</td>
-      <td>${subs.length ? fmtTs(subs[subs.length-1].ultimo_acesso) : '—'}</td>
-      <td><small>${subs.length ? (subs[subs.length-1].macs_registro||[]).join('<br>') : '—'}</small></td>
-      <td><small>${subs.length ? (subs[subs.length-1].macs_acesso||[]).join('<br>') : '—'}</small></td>
-      <td style="white-space:nowrap">
-        <button class="btn btn-muted"  style="padding:4px 10px;font-size:.78rem" onclick="abrirModal(${idx})">Editar</button>
-        <button class="btn btn-red"    style="padding:4px 10px;font-size:.78rem;margin-top:4px" onclick="deletar('${lic.chave_base}')">Excluir</button>
-      </td>`;
-    corpo.appendChild(tr);
-  });
-}
-
-// ── Carregar ──────────────────────────────────────────────────────────────────
+// ── Carregar dados ────────────────────────────────────────────────────────────
 async function carregar() {
   try {
     dados = await api('GET', '/api/licencas');
-    filtrar();
+    renderTabela();
+    document.getElementById('sidebarStatus').textContent =
+      '✓ Atualizado\n' + new Date().toLocaleString('pt-BR');
   } catch(e) {
     toast('Erro ao carregar: ' + e.message, true);
   }
 }
 
-function filtrar() {
-  const q = document.getElementById('busca').value.toLowerCase();
-  const lista = (dados.licencas || []).filter(l =>
-    !q ||
-    (l.chave_base||'').toLowerCase().includes(q) ||
-    (l.cliente||'').toLowerCase().includes(q) ||
-    (l.email||'').toLowerCase().includes(q)
-  );
-  renderLicencas(lista);
+// ── Render tabela ─────────────────────────────────────────────────────────────
+function renderTabela() {
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  linhaSelecionada = null;
+  atualizarBotoes();
+
+  let totalSub = 0, clientes = 0, ativas = 0, vencidas = 0;
+
+  for (const lic of dados.licencas) {
+    clientes++;
+    const { chave_base, cliente, email, telefone, expiracao, ativo, sublicencas = [] } = lic;
+    const limite = lic.limite ?? lic.limite_dispositivos ?? 1;
+    const isVencida = vencida(expiracao);
+    let tagBase, status;
+    if (!ativo)      { tagBase = 'row-inativa'; status = '✕ Inativa'; }
+    else if(isVencida){ vencidas++; tagBase = 'row-vencida'; status = '⚠ Vencida'; }
+    else              { ativas++;   tagBase = 'row-ativa';   status = '✓ Ativa'; }
+
+    totalSub += sublicencas.length;
+
+    if (sublicencas.length === 0) {
+      const tr = criarLinha([
+        chave_base, '—', cliente, email, telefone||'—',
+        expiracao, status, `0 / ${limite}`, '—', '—', '—', '—', '—', '—'
+      ], tagBase, chave_base, null);
+      tbody.appendChild(tr);
+    } else {
+      sublicencas.forEach((sub, i) => {
+        const subChave  = sub.chave || sub.chave_sub || '—';
+        const disp      = sub.dispositivo || '';
+        const nome_pc   = sub.nome_maquina || extrair_nome(disp) || '—';
+        const id_pc     = sub.id_maquina || extrair_id(disp) || '—';
+        const tag       = i % 2 === 0 ? 'row-grupo' : tagBase;
+        const tr = criarLinha([
+          i === 0 ? chave_base : '',
+          subChave,
+          i === 0 ? cliente   : '',
+          i === 0 ? email     : '',
+          i === 0 ? (telefone||'—') : '',
+          i === 0 ? expiracao : '',
+          i === 0 ? status    : '',
+          i === 0 ? `${sublicencas.length} / ${limite}` : '',
+          nome_pc, id_pc,
+          sub.versao        || '—',
+          sub.ultimo_acesso || '—',
+          formatar_macs(sub.macs_registro),
+          formatar_macs(sub.macs_ultimo_acesso || sub.macs_acesso),
+        ], tag, chave_base, subChave === '—' ? null : subChave);
+        tbody.appendChild(tr);
+      });
+    }
+  }
+
+  document.getElementById('cTotal').textContent    = totalSub;
+  document.getElementById('cClientes').textContent = clientes;
+  document.getElementById('cAtivas').textContent   = ativas;
+  document.getElementById('cVencidas').textContent = vencidas;
+  document.getElementById('rodape').textContent =
+    `${clientes} cliente(s)  ·  ${totalSub} ativação(ões)  ·  ${ativas} ativa(s)  ·  ${vencidas} vencida(s)`;
+}
+
+function criarLinha(vals, cssClass, chave_base, chave_sub) {
+  const tr = document.createElement('tr');
+  tr.className = cssClass;
+  vals.forEach(v => {
+    const td = document.createElement('td');
+    // Badge no campo status
+    if (typeof v === 'string' && (v.startsWith('✓') || v.startsWith('✕') || v.startsWith('⚠'))) {
+      const badge = document.createElement('span');
+      badge.className = v.startsWith('✓') ? 'badge badge-ativa' :
+                        v.startsWith('✕') ? 'badge badge-inativa' : 'badge badge-vencida';
+      badge.textContent = v;
+      td.appendChild(badge);
+    } else {
+      td.textContent = v || '';
+    }
+    tr.appendChild(td);
+  });
+  tr.addEventListener('click', () => selecionarLinha(tr, chave_base, chave_sub));
+  return tr;
+}
+
+// ── Seleção ───────────────────────────────────────────────────────────────────
+function selecionarLinha(tr, chave_base, chave_sub) {
+  // deselect anterior
+  if (linhaSelecionada && linhaSelecionada.tr) {
+    linhaSelecionada.tr.classList.remove('selected');
+  }
+  if (linhaSelecionada && linhaSelecionada.tr === tr) {
+    // clicou na mesma → deseleciona
+    linhaSelecionada = null;
+    atualizarBotoes();
+    return;
+  }
+  tr.classList.add('selected');
+  linhaSelecionada = { chave_base, chave_sub, tr };
+  atualizarBotoes();
+}
+
+function atualizarBotoes() {
+  const tem = !!linhaSelecionada;
+  const temSub = tem && !!linhaSelecionada.chave_sub;
+  document.getElementById('btnEditar').disabled  = !tem;
+  document.getElementById('btnRemover').disabled = !tem;
+  document.getElementById('btnCopiar').disabled  = !tem;
+  document.getElementById('btnLimpar').disabled  = !temSub;
+}
+
+// ── Ações ──────────────────────────────────────────────────────────────────────
+function editarSelecionada() {
+  if (!linhaSelecionada) return;
+  const lic = dados.licencas.find(l => l.chave_base === linhaSelecionada.chave_base);
+  if (!lic) return;
+  editandoIdx  = dados.licencas.indexOf(lic);
+  seqPreview   = parseInt(lic.chave_base.split('-')[2]);
+  abrirModal('Editar Licença', lic);
+}
+
+async function removerSelecionada() {
+  if (!linhaSelecionada) return;
+  const { chave_base, chave_sub } = linhaSelecionada;
+
+  if (chave_sub && chave_sub !== '—') {
+    if (!confirm(`Remover sublicença ${chave_sub}?`)) return;
+    await api('DELETE', `/api/licencas/${encodeURIComponent(chave_base)}/sublicencas/${encodeURIComponent(chave_sub)}`);
+    toast('Sublicença removida.');
+  } else {
+    const lic = dados.licencas.find(l => l.chave_base === chave_base);
+    const nsub = lic?.sublicencas?.length || 0;
+    if (!confirm(`Remover TODA a licença de "${lic?.cliente}"?\nInclui ${nsub} ativação(ões).`)) return;
+    await api('DELETE', `/api/licencas/${encodeURIComponent(chave_base)}`);
+    toast('Licença removida.');
+  }
+  await carregar();
+}
+
+async function limparDeviceSelecionado() {
+  if (!linhaSelecionada?.chave_sub) { toast('Selecione uma sublicença.', true); return; }
+  const { chave_base, chave_sub } = linhaSelecionada;
+  if (!confirm(`Limpar device da sublicença ${chave_sub}?\nO cliente poderá ativar em outro computador.`)) return;
+  await api('POST', `/api/licencas/${encodeURIComponent(chave_base)}/sublicencas/${encodeURIComponent(chave_sub)}/limpar`);
+  toast('Device limpo com sucesso.');
+  await carregar();
+}
+
+function copiarChaveSelecionada() {
+  if (!linhaSelecionada) return;
+  const chave = linhaSelecionada.chave_sub && linhaSelecionada.chave_sub !== '—'
+    ? linhaSelecionada.chave_sub
+    : linhaSelecionada.chave_base;
+  navigator.clipboard.writeText(chave).then(() => toast('Chave copiada: ' + chave));
 }
 
 // ── Modal ─────────────────────────────────────────────────────────────────────
-function abrirModal(idx) {
-  editandoIdx = idx;
-  const lic = idx !== null ? (dados.licencas || [])[idx] : null;
-  document.getElementById('modal-titulo').textContent = lic ? 'Editar Licença' : 'Nova Licença';
+function abrirModalNova() {
+  editandoIdx = null;
+  seqPreview  = null;
+  abrirModal('Nova Licença', null);
+}
 
-  document.getElementById('f-cliente').value = lic ? (lic.cliente||'') : '';
-  document.getElementById('f-email').value   = lic ? (lic.email||'')   : '';
-  document.getElementById('f-tel').value     = lic ? (lic.telefone||'') : '';
-  document.getElementById('f-exp').value     = lic ? (lic.expiracao||'') : '';
-  document.getElementById('f-limite').value  = lic ? (lic.limite_dispositivos||1) : 1;
-  document.getElementById('f-ativo').value   = lic ? String(lic.ativo !== false) : 'true';
-  ativoModal = lic ? (lic.ativo !== false) : true;
-
-  document.getElementById('modal-overlay').classList.add('open');
-  document.getElementById('f-cliente').focus();
+function abrirModal(titulo, lic) {
+  document.getElementById('modalTitulo').textContent = titulo;
+  document.getElementById('fCliente').value   = lic?.cliente   || '';
+  document.getElementById('fEmail').value     = lic?.email     || '';
+  document.getElementById('fTelefone').value  = lic?.telefone  || '';
+  document.getElementById('fExpiracao').value = lic?.expiracao || '';
+  document.getElementById('fLimite').value    = lic ? (lic.limite ?? lic.limite_dispositivos ?? 1) : 1;
+  ativoModal = lic !== null ? !!lic.ativo : true;
+  atualizarToggle();
+  atualizarPreview();
+  document.getElementById('modalOverlay').classList.add('open');
+  document.getElementById('fCliente').focus();
 }
 
 function fecharModal() {
-  document.getElementById('modal-overlay').classList.remove('open');
-  editandoIdx = null;
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+function fecharModalSeFora(e) {
+  if (e.target === document.getElementById('modalOverlay')) fecharModal();
 }
 
-// ── Salvar ────────────────────────────────────────────────────────────────────
-async function salvar() {
-  const cliente  = document.getElementById('f-cliente').value.trim();
-  const expiracao= document.getElementById('f-exp').value.trim();
-  const limite   = parseInt(document.getElementById('f-limite').value) || 1;
-  ativoModal     = document.getElementById('f-ativo').value === 'true';
+function toggleAtivo() {
+  ativoModal = !ativoModal;
+  atualizarToggle();
+}
+function atualizarToggle() {
+  const btn = document.getElementById('toggleAtivo');
+  const lbl = document.getElementById('toggleLabel');
+  btn.className = 'toggle' + (ativoModal ? ' on' : '');
+  lbl.textContent = ativoModal ? 'Licença Ativa' : 'Licença Inativa';
+}
 
-  if (!cliente) { toast('Informe o nome do cliente.', true); return; }
-  if (!expiracao) { toast('Informe a data de expiração.', true); return; }
-  if (!dataIsoValida(expiracao)) { toast('Use a data no formato AAAA-MM-DD. Ex.: 2050-12-31', true); return; }
-  if (isNaN(limite) || limite < 1 || limite > 26) { toast('Limite entre 1 e 26.', true); return; }
+async function atualizarPreview() {
+  const cliente = document.getElementById('fCliente').value.trim();
+  const email   = document.getElementById('fEmail').value.trim();
+  const el      = document.getElementById('chavePreview');
+  if (!cliente || !email) {
+    el.textContent = cliente ? '— aguardando e-mail —' : '— preencha nome e e-mail —';
+    return;
+  }
+  try {
+    const r = await fetch('/api/preview-chave', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cliente, email, seq: seqPreview }),
+    });
+    const j = await r.json();
+    el.textContent = j.chave || '—';
+    if (j.seq && seqPreview === null) seqPreview = j.seq;
+  } catch { el.textContent = '— erro —'; }
+}
 
-  const body = {
-    cliente,
-    email:     document.getElementById('f-email').value.trim(),
-    telefone:  document.getElementById('f-tel').value.trim(),
-    expiracao,
-    limite,
-    ativo: ativoModal,
-  };
+function copiarChaveModal() {
+  const chave = document.getElementById('chavePreview').textContent;
+  if (chave.includes('—')) { toast('Preencha nome e e-mail primeiro.', true); return; }
+  navigator.clipboard.writeText(chave).then(() => toast('Chave copiada: ' + chave));
+}
+
+async function salvarLicenca() {
+  const cliente   = document.getElementById('fCliente').value.trim();
+  const email     = document.getElementById('fEmail').value.trim();
+  const telefone  = document.getElementById('fTelefone').value.trim();
+  const expiracao = document.getElementById('fExpiracao').value.trim();
+  const limite    = parseInt(document.getElementById('fLimite').value);
+
+  if (!cliente || !email || !expiracao) {
+    toast('Nome, e-mail e expiração são obrigatórios.', true); return;
+  }
+  if (!dataIsoValida(expiracao)) {
+    toast('Use a data no formato AAAA-MM-DD. Ex.: 2050-12-31', true); return;
+  }
+  if (isNaN(limite) || limite < 1 || limite > 26) {
+    toast('Limite deve ser entre 1 e 26.', true); return;
+  }
+
+  const body = { cliente, email, telefone, expiracao, limite, ativo: ativoModal };
 
   try {
     if (editandoIdx === null) {
       const r = await api('POST', '/api/licencas', body);
       toast('Licença criada! Chave: ' + r.chave_base);
     } else {
-      const chave = (dados.licencas || [])[editandoIdx].chave_base;
+      const chave = dados.licencas[editandoIdx].chave_base;
       await api('PUT', `/api/licencas/${encodeURIComponent(chave)}`, body);
       toast('Licença atualizada.');
     }
@@ -401,41 +686,6 @@ async function salvar() {
     toast(e.message, true);
   }
 }
-
-// ── Excluir licença ───────────────────────────────────────────────────────────
-async function deletar(chave) {
-  if (!confirm(`Excluir licença ${chave}?`)) return;
-  try {
-    await api('DELETE', `/api/licencas/${encodeURIComponent(chave)}`);
-    toast('Licença excluída.');
-    await carregar();
-  } catch(e) { toast(e.message, true); }
-}
-
-// ── Excluir sublicença ────────────────────────────────────────────────────────
-async function deletarSub(chave_base, chave_sub) {
-  if (!confirm(`Excluir sublicença ${chave_sub}?`)) return;
-  try {
-    await api('DELETE', `/api/licencas/${encodeURIComponent(chave_base)}/sublicencas/${encodeURIComponent(chave_sub)}`);
-    toast('Sublicença excluída.');
-    await carregar();
-  } catch(e) { toast(e.message, true); }
-}
-
-// ── Limpar device ─────────────────────────────────────────────────────────────
-async function limparSub(chave_base, chave_sub) {
-  if (!confirm(`Limpar device de ${chave_sub}? O usuário precisará reativar.`)) return;
-  try {
-    await api('POST', `/api/licencas/${encodeURIComponent(chave_base)}/sublicencas/${encodeURIComponent(chave_sub)}/limpar`);
-    toast('Device limpo.');
-    await carregar();
-  } catch(e) { toast(e.message, true); }
-}
-
-// ── Fechar modal clicando fora ────────────────────────────────────────────────
-document.getElementById('modal-overlay').addEventListener('click', function(e) {
-  if (e.target === this) fecharModal();
-});
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 carregar();

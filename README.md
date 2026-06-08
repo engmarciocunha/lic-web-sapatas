@@ -101,9 +101,10 @@ Login com a senha definida em `PAINEL_SENHA`.
 
 ## Chaves geradas
 
-O servidor gera chaves com prefixo `DIM-SAP-`:
+O servidor gera chaves com prefixo `DIM-SAP` e um código SHA-256 derivado de
+`cliente + e-mail`:
 ```
-DIM-SAP-0001       ← chave base (o que você entrega ao cliente)
-DIM-SAP-0001-A     ← chave completa (gerada na 1ª ativação)
-DIM-SAP-0001-B     ← 2º dispositivo, se limite_dispositivos ≥ 2
+DIM-SAP-0001-XXXXXXXXXX       ← chave base (o que você entrega ao cliente)
+DIM-SAP-0001-XXXXXXXXXX-A     ← chave completa (gerada na 1ª ativação)
+DIM-SAP-0001-XXXXXXXXXX-B     ← 2º dispositivo, se limite_dispositivos ≥ 2
 ```
